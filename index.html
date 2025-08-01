@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoWorld - Car Showroom</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { background-color: #f4f4f4; }
+    header, footer, nav { background-color: #111; color: white; text-align: center; padding: 20px; }
+    nav ul { display: flex; list-style: none; justify-content: center; gap: 20px; }
+    nav ul li a { color: white; text-decoration: none; }
+    /* ✅ Background image for Hero section */
+    .hero { 
+      background: url("black bgm.jpg") center/cover no-repeat; 
+      height: 350px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 2.5rem; 
+      color: rgb(225, 225, 235); 
+    }
+    .container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 40px; }
+    .car-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .car-card img { width: 100%; height: 180px; object-fit: cover; }
+    .car-card-content { padding: 20px; }
+    .btn { background: #f39c12; color: white; padding: 10px 20px; border: none; border-radius: 5px; text-decoration: none; cursor: pointer; }
+    .btn:hover { background: #e67e22; }
+    .auth-form { max-width: 400px; margin: 100px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .auth-form input { width: 100%; padding: 10px; margin: 10px 0; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Form -->
+  <div id="loginPage" class="auth-form">
+    <h2>Login to AutoWorld</h2>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button id="loginBtn" class="btn">Login</button>
+    <p id="errorMsg" style="color:red;"></p>
+  </div>
+
+  <!-- Main Content -->
+  <div id="mainContent" class="hidden">
+    <nav>
+      <h1>AutoWorld</h1>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Cars</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><button id="logoutBtn" class="btn">Logout</button></li>
+      </ul>
+    </nav>
+    <div class="hero">Explore Luxury & Performance</div>
+
+    <!-- Hard-coded showroom cars -->
+    <div class="container">
+      <div class="car-card">
+        <img src="lambo.jpg" alt="Lamborghini" />
+        <div class="car-card-content">
+          <h3>Lamborghini</h3>
+          <p>Price: $209,000</p>
+        </div>
+      </div>
+      <div class="car-card">
+        <img src="proche.webp" alt="Porsche" />
+        <div class="car-card-content">
+          <h3>Porsche</h3>
+          <p>Price: $120,100</p>
+        </div>
+      </div>
+      <div class="car-card">
+        <img src="bmw.avif" alt="BMW" />
+        <div class="car-card-content">
+          <h3>BMW</h3>
+          <p>Price: $241,350</p>
+        </div>
+      </div>
+      <div class="car-card">
+        <img src="ferrari.jpg" alt="Ferrari" />
+        <div class="car-card-content">
+          <h3>Ferrari</h3>
+          <p>Price: $243,000</p>
+        </div>
+      </div>
+      <div class="car-card">
+        <img src="royce.jpg" alt="Rolls Royce" />
+        <div class="car-card-content">
+          <h3>Rolls Royce</h3>
+          <p>Price: $50,000</p>
+        </div>
+      </div>
+      <div class="car-card">
+        <img src="jaguar.avif" alt="Jaguar" />
+        <div class="car-card-content">
+          <h3>Jaguar</h3>
+          <p>Price: $120,000</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firestore cars -->
+    <h2 style="text-align:center; margin-top:40px;">More Cars</h2>
+    <div class="container" id="carList">
+      <!-- Firestore cars will load here -->
+    </div>
+
+    <footer>
+      <p>&copy; 2025 AutoWorld. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxMEnYzALt67F7mqsCqscrT6jQzRiqeX4",
+      authDomain: "jprada-ddea5.firebaseapp.com",
+      projectId: "jprada-ddea5",
+      storageBucket: "jprada-ddea5.firebasestorage.app",
+      messagingSenderId: "972538428619",
+      appId: "1:972538428619:web:336ef7d87cde5c9a0daf4e"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginPage = document.getElementById("loginPage");
+    const mainContent = document.getElementById("mainContent");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const errorMsg = document.getElementById("errorMsg");
+    const carList = document.getElementById("carList");
+
+    // Login
+    loginBtn.addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => { errorMsg.textContent = ""; })
+        .catch((error) => {
+          console.error("Login error:", error);
+          errorMsg.textContent = "Login Failed: " + error.message;
+        });
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", () => { signOut(auth); });
+
+    // Watch login status
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginPage.classList.add("hidden");
+        mainContent.classList.remove("hidden");
+        loadCars();
+      } else {
+        loginPage.classList.remove("hidden");
+        mainContent.classList.add("hidden");
+        carList.innerHTML = "";
+      }
+    });
+
+    // Load Cars from Firestore
+    async function loadCars() {
+      try {
+        carList.innerHTML = "<p>Loading cars...</p>";
+        const querySnapshot = await getDocs(collection(db, "cars"));
+        if (querySnapshot.empty) {
+          carList.innerHTML = "<p>No cars found in Firestore.</p>";
+          return;
+        }
+        carList.innerHTML = "";
+        querySnapshot.forEach((doc) => {
+          const car = doc.data();
+          carList.innerHTML += `
+            <div class="car-card">
+              <!-- ✅ Firestore Image Source -->
+              <img src="lambog. - Copy.webp">
+              <div class="car-card-content">
+                <h3>${car.name}</h3>
+                <p>Price: $${car.price}</p>
+              </div>
+            </div>
+          `;
+        });
+      } catch (error) {
+        console.error("Error loading cars:", error);
+        carList.innerHTML = "<p style='color:red;'>Error loading cars. Check console.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
